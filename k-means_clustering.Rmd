@@ -1,0 +1,72 @@
+---
+title: "k-means_clustering.rmd"
+output: html_document
+date: "2024-04-17"
+---
+
+```{r setup, include=FALSE}
+# Load necessary libraries
+library(tidyverse)
+library(ggfortify)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+
+# Step 1: Load the data
+diabetes <- read.csv("./data/Diabetes_prediction.csv")
+
+# Step 2: Preprocess the data (example: normalize the data)
+# It's often a good idea to scale the data because K-means is sensitive to the scale of the data
+diabetes_scaled <- scale(diabetes[, sapply(diabetes, is.numeric)])  # Scaling numeric columns
+
+# Step 3: Perform K-means clustering
+set.seed(123)  # for reproducibility
+k <- 3  # number of clusters
+diabetes_kmeans <- kmeans(diabetes_scaled, centers = k, nstart = 25)
+
+# Step 4: Analyze the results
+# Print cluster centers
+print(diabetes_kmeans$centers)
+
+# Adding cluster results back to the original data
+diabetes$cluster <- diabetes_kmeans$cluster
+
+# Step 5: Visualize the results
+# Using ggplot2 to plot the clusters (example using the first two principal components)
+
+autoplot(prcomp(diabetes_scaled), data = diabetes, colour = 'cluster', frame = TRUE)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+diabetes$cluster <- as.factor(diabetes_kmeans$cluster)  # Convert cluster to a factor for coloring
+
+# Perform PCA on the scaled data
+pca_results <- prcomp(diabetes_scaled)
+
+# Extract the first two principal components
+pc_data <- as.data.frame(pca_results$x[, 1:2])
+colnames(pc_data) <- c("PC1", "PC2")
+pc_data$cluster <- diabetes$cluster  # Add cluster information for coloring
+
+# Create a scatter plot using ggplot2
+ggplot(pc_data, aes(x = PC1, y = PC2, color = cluster)) +
+  geom_point(alpha = 0.5, size = 3) +
+  scale_color_manual(values = c("red", "blue", "green")) +  # Custom colors for each cluster
+  labs(title = "PCA of Diabetes Dataset with K-means Clustering",
+       x = "Principal Component 1",
+       y = "Principal Component 2",
+       color = "Cluster") +
+  theme_minimal()
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
